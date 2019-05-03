@@ -11,7 +11,7 @@ namespace Server
     {
         static void Main(string[] args)
         {
-            const int MAXBUF = 256;
+            const int MAXBUF = 4096;
             const string IP = "127.0.0.1";
             const int PORT = 8080;
 
@@ -52,7 +52,7 @@ namespace Server
 
         static string ExecuteCommand(string request)
         {
-            string response = "response";
+            string response = "";
             int iIndexSpace = request.IndexOf(' ');
             string sCommand = "";
             string sOperand = "";
@@ -69,12 +69,19 @@ namespace Server
                     sOperand = sOperand.Substring(0, iIndexSpace);
                 }
 
+                // Now, cut off the first slash if there is one, so we can use relative path
+                iIndexSpace = sOperand.IndexOf('/');
+                if (iIndexSpace > -1)
+                {
+                    sOperand = sOperand.Substring(iIndexSpace + 1);
+                }
+
                 switch (sCommand)
                 {
                     case "GET":
                         try
                         {
-                            response = File.ReadAllText(sOperand);
+                            response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n" + File.ReadAllText(sOperand);
                         }
                         catch (Exception err)
                         {
@@ -83,7 +90,7 @@ namespace Server
                         break;
 
                     default:
-                        response = "*** Unknown Command ***";
+                        response = "HTTP/1.1 400 Bad Request\n*** Unknown Command ***\n\n";
                         break;
                 }
             }
